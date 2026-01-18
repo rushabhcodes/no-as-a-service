@@ -3,7 +3,6 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { rateLimit, ipKeyGenerator } from 'express-rate-limit';
 
 const app = express();
 
@@ -17,28 +16,6 @@ const __dirname = path.dirname(__filename);
 const reasonsPath = path.join(__dirname, 'reasons.json');
 const reasons = JSON.parse(fs.readFileSync(reasonsPath, 'utf-8'));
 
-// Rate limiter: 120 requests per minute per IP
-const limiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 120,
-  keyGenerator: (req) => {
-    const headerIp = req.headers['cf-connecting-ip'];
-
-    if (Array.isArray(headerIp) && headerIp.length > 0) {
-      return headerIp[0];
-    }
-
-    if (typeof headerIp === 'string' && headerIp.trim()) {
-      return headerIp;
-    }
-
-    // Use express-rate-limit's helper to normalize IPv6 subnets
-    return ipKeyGenerator(req.ip);
-  },
-  message: { error: "Too many requests, please try again later. (120 reqs/min/IP)" }
-});
-
-app.use(limiter);
 
 // Random rejection reason endpoint
 interface ReasonResponse {
