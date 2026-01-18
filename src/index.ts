@@ -23,13 +23,17 @@ const limiter = rateLimit({
   max: 120,
   keyGenerator: (req) => {
     const headerIp = req.headers['cf-connecting-ip'];
-    if (Array.isArray(headerIp)) {
+
+    if (Array.isArray(headerIp) && headerIp.length > 0) {
       return headerIp[0];
     }
-    if (headerIp) {
+
+    if (typeof headerIp === 'string' && headerIp.trim()) {
       return headerIp;
     }
-    return ipKeyGenerator(req); // IPv4/IPv6 safe fallback
+
+    // Use express-rate-limit's helper to normalize IPv6 subnets
+    return ipKeyGenerator(req.ip);
   },
   message: { error: "Too many requests, please try again later. (120 reqs/min/IP)" }
 });
